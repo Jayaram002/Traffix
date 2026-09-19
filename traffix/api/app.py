@@ -32,13 +32,19 @@ app = FastAPI(
 )
 
 # CORS Configuration from environment
-cors_origins_raw = os.getenv("CORS_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000,http://localhost:3000")
-allowed_origins = [orig.strip() for orig in cors_origins_raw.split(",") if orig.strip()]
+# Default to allow all origins so cloud deployments (Vercel, etc.) work without extra config
+cors_origins_raw = os.getenv("CORS_ORIGINS", "*")
+if cors_origins_raw.strip() == "*":
+    allowed_origins = ["*"]
+    allow_credentials = False  # Cannot use credentials with wildcard
+else:
+    allowed_origins = [orig.strip() for orig in cors_origins_raw.split(",") if orig.strip()]
+    allow_credentials = True
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )

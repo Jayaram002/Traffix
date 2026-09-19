@@ -3,9 +3,19 @@ from pathlib import Path
 
 # Base Paths
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = Path(r"D:\temp C\all filess\ram\Neurax3.0\Training set")
-UPLOAD_DIR = BASE_DIR / "uploads"
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+# DATA_DIR: prefer env var (for cloud), fallback to local training set path
+_local_data_dir = Path(r"D:\temp C\all filess\ram\Neurax3.0\Training set")
+DATA_DIR = Path(os.getenv("DATA_DIR", str(_local_data_dir)))
+
+# UPLOAD_DIR: use /tmp on read-only filesystems (Vercel, Cloud Run), else local
+_default_upload = "/tmp/traffix_uploads" if os.getenv("VERCEL") or os.getenv("CLOUD_RUN_JOB") else str(BASE_DIR / "uploads")
+UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", _default_upload))
+try:
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    UPLOAD_DIR = Path("/tmp/traffix_uploads")
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 # Dataset file paths (defaults to organizer dataset directory if present)
 DATASET_PATHS = {
@@ -78,13 +88,11 @@ BPR_ALPHA = 0.15
 BPR_BETA = 4.0
 
 # Server config
-SERVER_HOST = "127.0.0.1"
-SERVER_PORT = 8000
+SERVER_HOST = os.getenv("HOST", "0.0.0.0")
+SERVER_PORT = int(os.getenv("PORT", "8000"))
 
 # Google Gemini & Neon AI Gateway Configuration
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyDefaultTraffixNeuraxGeminiPipelineKey2026").strip()
-if not GEMINI_API_KEY:
-    GEMINI_API_KEY = "AIzaSyDefaultTraffixNeuraxGeminiPipelineKey2026"
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash").strip()
 NEON_AI_GATEWAY_BASE_URL = os.getenv("NEON_AI_GATEWAY_BASE_URL", "").strip()
 NEON_AI_GATEWAY_TOKEN = os.getenv("NEON_AI_GATEWAY_TOKEN", "").strip()
