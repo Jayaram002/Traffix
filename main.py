@@ -1,15 +1,23 @@
+"""
+Traffix NeuraX 3.0 - Entry Point
+Exposes the FastAPI `app` instance at the top level so deployment platforms
+(Cloud Run, Railway, Render, Fly.io, etc.) can discover it automatically.
+
+Usage:
+  uvicorn main:app --host 0.0.0.0 --port 8000
+  python main.py --mode server --port 8000
+"""
 import argparse
 import uvicorn
 import logging
 import sys
 from pathlib import Path
 
-# Add project root to sys.path
+# Add project root to sys.path so all internal imports resolve correctly
 BASE_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(BASE_DIR))
 
 from traffix.core.config import SERVER_HOST, SERVER_PORT
-from traffix.core.service import TrafficIntelligenceService
 
 logging.basicConfig(
     level=logging.INFO,
@@ -17,11 +25,22 @@ logging.basicConfig(
 )
 logger = logging.getLogger("TraffixMain")
 
+# -----------------------------------------------------------------------
+# Top-level FastAPI app — required by deployment platforms
+# (Cloud Run, Railway, Render, Fly.io, Uvicorn workers, etc.)
+# -----------------------------------------------------------------------
+from traffix.api.app import app  # noqa: E402  (must be top-level name)
+
+__all__ = ["app"]
+
+
 def run_server(host: str = SERVER_HOST, port: int = SERVER_PORT, reload: bool = False):
     logger.info(f"Starting Traffix Decision-Support Server at http://{host}:{port}")
-    uvicorn.run("traffix.api.app:app", host=host, port=port, reload=reload)
+    uvicorn.run("main:app", host=host, port=port, reload=reload)
+
 
 def run_benchmark():
+    from traffix.core.service import TrafficIntelligenceService
     logger.info("Running offline evaluation and benchmarking...")
     svc = TrafficIntelligenceService.get_instance()
     svc.initialize()
@@ -62,6 +81,7 @@ def run_benchmark():
         print(f"  Benefit-Cost Ratio: {c['impact']['benefit_cost_ratio']}")
 
     print("\nBenchmark completed successfully.")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Traffix NeuraX 3.0 Platform CLI")
