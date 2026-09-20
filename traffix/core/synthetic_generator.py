@@ -24,14 +24,15 @@ class SyntheticTrafficGenerator:
     - True physical Haversine edge distances matching GPS coordinates exactly.
     """
     def __init__(self, segments: int = 436, nodes: int = 120, days: float = 0.25):
-        self.num_nodes = max(60, min(nodes, 120))
+        self.num_nodes = max(2, nodes)
+        self.num_segments = segments
         self.days = days  # 0.25 days = 6 hours (72 intervals) for lean memory footprint
         self.interval_minutes = 5
 
     def generate_network(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
         # Generate nodes across Hyderabad metropolitan coordinates (17.30 - 17.48 N, 78.35 - 78.55 E)
         node_rows = []
-        cols = 12
+        cols = 12 if self.num_nodes >= 12 else max(2, int(math.ceil(math.sqrt(self.num_nodes))))
         rows = math.ceil(self.num_nodes / cols)
         
         node_map = {}
