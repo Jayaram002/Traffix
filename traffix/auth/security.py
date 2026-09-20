@@ -2,7 +2,10 @@ import os
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 import bcrypt
-import jwt
+try:
+    import jwt
+except ImportError:
+    from jose import jwt
 from dotenv import load_dotenv
 from pathlib import Path
 

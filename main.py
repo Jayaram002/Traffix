@@ -36,8 +36,23 @@ __all__ = ["app"]
 
 
 def run_server(host: str = None, port: int = None, reload: bool = False):
-    final_host = host or os.getenv("HOST", "0.0.0.0")
-    final_port = port or int(os.getenv("PORT", str(SERVER_PORT)))
+    # If deployed on Render or any cloud platform with dynamic PORT, prioritize it
+    env_port = os.getenv("PORT")
+    if env_port:
+        final_port = int(env_port)
+    elif port is not None:
+        final_port = port
+    else:
+        final_port = SERVER_PORT
+
+    env_host = os.getenv("HOST")
+    if env_host:
+        final_host = env_host
+    elif host is not None:
+        final_host = host
+    else:
+        final_host = "0.0.0.0"
+
     logger.info(f"Starting Traffix Decision-Support Server on {final_host}:{final_port}")
     uvicorn.run("main:app", host=final_host, port=final_port, reload=reload)
 
