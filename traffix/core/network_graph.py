@@ -65,20 +65,22 @@ class RoadNetworkGraph:
         for _, row in traffic_snapshot.iterrows():
             seg_id = str(row["segment_id"])
             if seg_id in self.segment_lookup:
-                speed = float(row.get("speed_kmh", self.segment_lookup[seg_id]["free_flow_speed_kmh"]))
+                seg = self.segment_lookup[seg_id]
+                speed = float(row.get("speed_kmh", seg["free_flow_speed_kmh"]))
                 flow = float(row.get("flow_vph", 0.0))
-                tt = float(row.get("travel_time_min", (self.segment_lookup[seg_id]["length_km"] / max(speed, 5.0)) * 60.0))
+                tt = float(row.get("travel_time_min", (seg["length_km"] / max(speed, 5.0)) * 60.0))
                 
-                self.segment_lookup[seg_id]["current_speed_kmh"] = speed
-                self.segment_lookup[seg_id]["current_flow_vph"] = flow
-                self.segment_lookup[seg_id]["current_travel_time_min"] = tt
+                seg["current_speed_kmh"] = speed
+                seg["current_flow_vph"] = flow
+                seg["current_travel_time_min"] = tt
 
-                u = self.segment_lookup[seg_id]["source_node"]
-                v = self.segment_lookup[seg_id]["target_node"]
+                u = seg["source_node"]
+                v = seg["target_node"]
                 if self.graph.has_edge(u, v):
                     self.graph[u][v]["current_speed_kmh"] = speed
                     self.graph[u][v]["current_flow_vph"] = flow
                     self.graph[u][v]["current_travel_time_min"] = tt
+
 
     def compute_bpr_travel_time(self, seg_id: str, flow_vph: Optional[float] = None) -> float:
         """BPR volume-delay formula: t = t_0 * (1 + alpha * (V / C) ^ beta)"""

@@ -56,6 +56,7 @@ service = TrafficIntelligenceService.get_instance()
 
 @app.on_event("startup")
 def startup_event():
+    import gc
     init_db()
     try:
         from traffix.auth.seed import seed_database
@@ -63,6 +64,7 @@ def startup_event():
     except Exception as e:
         logger.warning(f"Could not seed demo users: {e}")
     service.initialize()
+    gc.collect()
 
 def ensure_initialized():
     if not service.is_initialized:
@@ -774,7 +776,7 @@ UI_DIR = Path(__file__).resolve().parent.parent / "ui"
 if UI_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(UI_DIR)), name="static")
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def serve_ui():
     index_path = UI_DIR / "index.html"
     if index_path.exists():
