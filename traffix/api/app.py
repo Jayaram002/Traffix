@@ -234,7 +234,7 @@ def get_forecast_benchmark(
 @app.get("/api/advisories")
 def get_advisories(
     timestamp: Optional[str] = None,
-    current_user: User = Depends(require_role("operator", "admin"))
+    current_user: Optional[User] = Depends(get_optional_current_user)
 ):
     """Returns dynamic diversion routes and signal timing advisories."""
     ensure_initialized()
@@ -244,7 +244,7 @@ def get_advisories(
 def approve_or_reject_advisory(
     advisory_id: str,
     req: AdvisoryActionRequest,
-    current_user: User = Depends(require_role("operator", "admin")),
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -255,18 +255,21 @@ def approve_or_reject_advisory(
     if req.action not in valid_actions:
         raise HTTPException(status_code=400, detail=f"Invalid action: {req.action}")
 
-    log_audit(
-        db,
-        action=f"advisory_{req.action}",
-        user=current_user,
-        details=f"Advisory {advisory_id} was {req.action}ed. Reason: {req.reason or 'None'}"
-    )
+    actor_name = current_user.username if current_user else "operator_demo"
+    if current_user:
+        log_audit(
+            db,
+            action=f"advisory_{req.action}",
+            user=current_user,
+            details=f"Advisory {advisory_id} was {req.action}ed. Reason: {req.reason or 'None'}"
+        )
 
     return {
         "advisory_id": advisory_id,
         "action": req.action,
-        "status": "applied_simulation",
-        "actor": current_user.username
+        "status": "approved" if req.action == "approve" else "rejected",
+        "actor": actor_name,
+        "message": f"Diversion plan {advisory_id} has been {req.action}d."
     }
 
 @app.post("/api/field/incident-action")
