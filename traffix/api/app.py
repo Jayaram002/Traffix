@@ -57,6 +57,11 @@ service = TrafficIntelligenceService.get_instance()
 @app.on_event("startup")
 def startup_event():
     init_db()
+    try:
+        from traffix.auth.seed import seed_database
+        seed_database()
+    except Exception as e:
+        logger.warning(f"Could not seed demo users: {e}")
     service.initialize()
 
 def ensure_initialized():

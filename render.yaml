@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: traffix-neurax
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATABASE_URL
+        generateValue: false
+      - key: GEMINI_API_KEY
+        generateValue: false

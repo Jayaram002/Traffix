@@ -1,12 +1,13 @@
 """
 Traffix NeuraX 3.0 - Entry Point
 Exposes the FastAPI `app` instance at the top level so deployment platforms
-(Cloud Run, Railway, Render, Fly.io, etc.) can discover it automatically.
+(Render, Cloud Run, Railway, Fly.io, etc.) can discover and serve it automatically.
 
 Usage:
-  uvicorn main:app --host 0.0.0.0 --port 8000
-  python main.py --mode server --port 8000
+  uvicorn main:app --host 0.0.0.0 --port 10000
+  python main.py --mode server
 """
+import os
 import argparse
 import uvicorn
 import logging
@@ -27,16 +28,18 @@ logger = logging.getLogger("TraffixMain")
 
 # -----------------------------------------------------------------------
 # Top-level FastAPI app — required by deployment platforms
-# (Cloud Run, Railway, Render, Fly.io, Uvicorn workers, etc.)
+# (Render, Cloud Run, Railway, Fly.io, Uvicorn workers, etc.)
 # -----------------------------------------------------------------------
 from traffix.api.app import app  # noqa: E402  (must be top-level name)
 
 __all__ = ["app"]
 
 
-def run_server(host: str = SERVER_HOST, port: int = SERVER_PORT, reload: bool = False):
-    logger.info(f"Starting Traffix Decision-Support Server at http://{host}:{port}")
-    uvicorn.run("main:app", host=host, port=port, reload=reload)
+def run_server(host: str = None, port: int = None, reload: bool = False):
+    final_host = host or os.getenv("HOST", "0.0.0.0")
+    final_port = port or int(os.getenv("PORT", str(SERVER_PORT)))
+    logger.info(f"Starting Traffix Decision-Support Server on {final_host}:{final_port}")
+    uvicorn.run("main:app", host=final_host, port=final_port, reload=reload)
 
 
 def run_benchmark():
@@ -86,8 +89,8 @@ def run_benchmark():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Traffix NeuraX 3.0 Platform CLI")
     parser.add_argument("--mode", choices=["server", "benchmark"], default="server", help="Execution mode")
-    parser.add_argument("--host", default=SERVER_HOST, help="Server bind host")
-    parser.add_argument("--port", type=int, default=SERVER_PORT, help="Server port")
+    parser.add_argument("--host", default=None, help="Server bind host (defaults to HOST env var or 0.0.0.0)")
+    parser.add_argument("--port", type=int, default=None, help="Server port (defaults to PORT env var or 8000)")
     args = parser.parse_args()
 
     if args.mode == "benchmark":

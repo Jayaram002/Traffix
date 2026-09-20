@@ -73,8 +73,8 @@ class MultiHorizonForecaster:
         for seg_id, group in training_df.groupby("segment_id"):
             self.historical_stats[seg_id] = float(group["speed_kmh"].mean())
 
-        # Downsample for fast execution if training dataset is large
-        sample_df = training_df.sample(n=min(25000, len(training_df)), random_state=42)
+        # Downsample for fast execution if training dataset is large (keeps startup fast on Render free tier)
+        sample_df = training_df.sample(n=min(5000, len(training_df)), random_state=42)
         X, Y = self._extract_features(sample_df)
 
         for h in self.horizons:
